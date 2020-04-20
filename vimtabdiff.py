@@ -3,6 +3,8 @@
 # From https://www.safaribooksonline.com/library/view/python-cookbook-2nd/0596007973/ch01s12.html
 from __future__ import division           # ensure / does NOT truncate
 import os
+import pexpect
+import psutil
 import sys
 import subprocess
 import tempfile
@@ -77,19 +79,12 @@ def list_diff_files(parent, dcmp):
     diff_files += list_diff_files(os.path.join(parent, subdir), sub_dcmp)
   return diff_files
 
-if '__main__' == __name__:
-  from argparse import ArgumentParser
-  from filecmp import dircmp
-  parser = ArgumentParser(description='Diff by vim, switching with tabs')
-  parser.add_argument('root1', help='right tab', type=str)
-  parser.add_argument('root2', help='left tab', type=str)
-  opt = parser.parse_args(sys.argv[1:])
-
-  if os.path.isdir(opt.root1) and os.path.isdir(opt.root2):
-    dcmp = dircmp(os.path.realpath(opt.root1), os.path.realpath(opt.root2))
+def diff_two_roots(root1, root2):
+  if os.path.isdir(root1) and os.path.isdir(root2):
+    dcmp = dircmp(os.path.realpath(root1), os.path.realpath(root2))
     filelist = list_diff_files('', dcmp)
-  elif os.path.isfile(opt.root1) and os.path.isfile(opt.root2):
-    subprocess.check_call(['vimdiff', opt.root1, opt.root2])
+  elif os.path.isfile(root1) and os.path.isfile(root2):
+    subprocess.check_call(['vimdiff', root1, root2])
     sys.exit(0)
   else:
     raise ValueError('Please assign two directories or two files!')
@@ -98,7 +93,40 @@ if '__main__' == __name__:
     if len(filelist) > 50:
       print 'Too many diff files to display. Total [%d] files' % len(filelist)
       sys.exit(-1)
-    tabdiff_with_vim(opt.root1, opt.root2, filelist)
+    tabdiff_with_vim(root1, root2, filelist)
   else:
     print 'No difference'
     sys.exit(0)
+
+if '__main__' == __name__:
+  from argparse import ArgumentParser
+  from filecmp import dircmp
+
+  bin_name = os.path.basename(sys.argv[0])
+
+  if bin_name.startswith('vimtabdiff') or bin_name.startswith('tdf'):
+    parser = ArgumentParser(description='Diff by vim, switching with tabs')
+    parser.add_argument('root1', help='right tab', type=str)
+    parser.add_argument('root2', help='left tab', type=str)
+    opt = parser.parse_args(sys.argv[1:])
+    diff_two_roots(opt.root1, opt.root2)
+  else:
+    child = pexpect.spawn('git difftool --dir-diff --no-prompt ' + ' '.join(sys.argv[1:]))
+    print('spawn git difftool pid ' + str(child.pid))
+    child.expect('\"')
+    if not child.isalive():
+      print('Error. child is not alive. pid ' + child.pid)
+    children = psutil.Process(child.pid).children(recursive=True)
+    if len(children) < 1 or children[-1].name() != 'vim':
+      print('Error. unexpected children:\n' +
+            '\n'.join([' '.join(c.cmdline()) for c in children]))
+      import IPython
+      IPython.embed()
+      sys.exit(-1)
+
+    vim_proc = children[-1]
+    root1 = vim_proc.cmdline()[-1]
+    root2 = vim_proc.cmdline()[-2]
+
+    diff_two_roots(root1, root2)
+    child.kill(0)
