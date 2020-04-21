@@ -30,12 +30,16 @@ def tabdiff_with_vim(root1, root2, filelist):
   for file_path in filelist:
     if file_path.endswith('.pyc') or file_path.endswith('.swp'):
       continue
-    with open(os.path.join(root1, file_path)) as fp:
-      if not istext(fp.read(1024)):
-        print 'skip non-text file ' + os.path.join(root1, file_path)
-        non_text_filelist.append(file_path)
-        continue
-    cmd.append(os.path.join(root1, file_path))
+    file_path_in_root1 = os.path.join(root1, file_path)
+    if os.path.exists(file_path_in_root1):
+      with open(file_path_in_root1) as fp:
+        if not istext(fp.read(1024)):
+          print 'skip non-text file ' + os.path.join(root1, file_path)
+          non_text_filelist.append(file_path)
+        else:
+          cmd.append(file_path_in_root1)
+    else:
+      cmd.append(os.devnull)
 
   script_content = ''
   for file_path in filelist:
@@ -44,7 +48,11 @@ def tabdiff_with_vim(root1, root2, filelist):
     if file_path in non_text_filelist:
       print 'skip non-text file ' + os.path.join(root2, file_path)
       continue
-    script_content += ":vertical diffsplit %s\n" % os.path.join(root2, file_path)
+    file_path_in_root2 = os.path.join(root2, file_path)
+    if os.path.exists(file_path_in_root2):
+      script_content += ":vertical diffsplit %s\n" % file_path_in_root2
+    else:
+      script_content += ":vertical diffsplit %s\n" % os.devnull
     script_content += ':tabn\n'
 
   with tempfile.NamedTemporaryFile(suffix = '_' + os.path.basename(__file__)) as fp:
@@ -54,8 +62,8 @@ def tabdiff_with_vim(root1, root2, filelist):
     cmd += ['-s', fp.name]
     try:
       subprocess.check_call(cmd)
-      print ' '.join(cmd)
-      print script_content
+      #print ' '.join(cmd)
+      #print script_content
     except Exception, e:
       print 'Failed: ' + str(e)
       print ' '.join(cmd)
@@ -63,17 +71,17 @@ def tabdiff_with_vim(root1, root2, filelist):
 
 def list_diff_files(parent, dcmp):
   diff_files = [os.path.join(parent, x) for x in dcmp.diff_files]
-  #diff_files += [os.path.join(parent, x) for x in dcmp.left_only]
-  #diff_files += [os.path.join(parent, x) for x in dcmp.right_only]
+  diff_files += [os.path.join(parent, x) for x in dcmp.left_only]
+  diff_files += [os.path.join(parent, x) for x in dcmp.right_only]
   #diff_files += [os.path.join(parent, x) for x in dcmp.funny_files]
   if dcmp.left_only:
-    print 'Files Left Only:\n\t' + '\n\t'.join(dcmp.left_only)
+    print parent + ' Left Only:\n\t' + '\n\t'.join(dcmp.left_only)
     pass
   if dcmp.right_only:
-    print 'Files Right Only:\n\t' + '\n\t'.join(dcmp.right_only)
+    print parent + ' Right Only:\n\t' + '\n\t'.join(dcmp.right_only)
     pass
   if dcmp.funny_files:
-    print 'Files cannot be compared:\n\t' + '\n\t'.join(dcmp.funny_files)
+    print parent + ' Files cannot be compared:\n\t' + '\n\t'.join(dcmp.funny_files)
     pass
   for subdir, sub_dcmp in dcmp.subdirs.iteritems():
     diff_files += list_diff_files(os.path.join(parent, subdir), sub_dcmp)
@@ -120,13 +128,11 @@ if '__main__' == __name__:
     if len(children) < 1 or children[-1].name() != 'vim':
       print('Error. unexpected children:\n' +
             '\n'.join([' '.join(c.cmdline()) for c in children]))
-      import IPython
-      IPython.embed()
       sys.exit(-1)
 
     vim_proc = children[-1]
-    root1 = vim_proc.cmdline()[-1]
-    root2 = vim_proc.cmdline()[-2]
+    root1 = vim_proc.cmdline()[-2]
+    root2 = vim_proc.cmdline()[-1]
 
     diff_two_roots(root1, root2)
     child.kill(0)
