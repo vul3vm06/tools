@@ -1,18 +1,26 @@
 #! /usr/bin/env python
 
-# From https://www.safaribooksonline.com/library/view/python-cookbook-2nd/0596007973/ch01s12.html
 from __future__ import division           # ensure / does NOT truncate
 import os
 import pexpect
 import psutil
-import sys
+import string
 import subprocess
+import sys
 import tempfile
 
-import string
-text_characters = "".join(map(chr, range(32, 127))) + "\n\r\t\b"
-_null_trans = string.maketrans("", "")
-def istext(s, text_characters=text_characters, threshold=0.30):
+if sys.version_info[0] == 2:
+  def trans(s):
+    return s.translate(string.maketrans("", ""), string.printable)
+elif sys.version_info[0] == 3:
+  def trans(s):
+    return s.translate(str.maketrans("", "", string.printable))
+else:
+  def trans(s):
+    return s
+
+# Adapt from Python Cookbook Andrew Dalke
+def istext(s, threshold=0.30):
   # if s contains any null, it's not text:
   if "\0" in s:
       return False
@@ -20,7 +28,7 @@ def istext(s, text_characters=text_characters, threshold=0.30):
   if not s:
       return True
   # Get the substring of s made up of non-text characters
-  t = s.translate(_null_trans, text_characters)
+  t = trans(s)
   # s is 'text' if less than 30% of its characters are non-text ones:
   return len(t)/len(s) <= threshold
 
@@ -34,7 +42,7 @@ def tabdiff_with_vim(root1, root2, filelist):
     if os.path.exists(file_path_in_root1):
       with open(file_path_in_root1) as fp:
         if not istext(fp.read(1024)):
-          print 'skip non-text file ' + os.path.join(root1, file_path)
+          print('skip non-text file ' + os.path.join(root1, file_path))
           non_text_filelist.append(file_path)
         else:
           cmd.append(file_path_in_root1)
@@ -46,7 +54,7 @@ def tabdiff_with_vim(root1, root2, filelist):
     if file_path.endswith('.pyc') or file_path.endswith('.swp'):
       continue
     if file_path in non_text_filelist:
-      print 'skip non-text file ' + os.path.join(root2, file_path)
+      print('skip non-text file ' + os.path.join(root2, file_path))
       continue
     file_path_in_root2 = os.path.join(root2, file_path)
     if os.path.exists(file_path_in_root2):
@@ -55,19 +63,19 @@ def tabdiff_with_vim(root1, root2, filelist):
       script_content += ":vertical diffsplit %s\n" % os.devnull
     script_content += ':tabn\n'
 
-  with tempfile.NamedTemporaryFile(suffix = '_' + os.path.basename(__file__)) as fp:
+  with tempfile.NamedTemporaryFile(suffix = '_' + os.path.basename(__file__), mode = 'w') as fp:
     fp.write(script_content)
     fp.flush()
 
     cmd += ['-s', fp.name]
     try:
       subprocess.check_call(cmd)
-      #print ' '.join(cmd)
-      #print script_content
-    except Exception, e:
-      print 'Failed: ' + str(e)
-      print ' '.join(cmd)
-      print script_content
+      #print(' '.join(cmd))
+      #print(script_content)
+    except Exception as e:
+      print('Failed: ' + str(e))
+      print(' '.join(cmd))
+      print(script_content)
 
 def list_diff_files(parent, dcmp):
   diff_files = [os.path.join(parent, x) for x in dcmp.diff_files]
@@ -75,15 +83,15 @@ def list_diff_files(parent, dcmp):
   diff_files += [os.path.join(parent, x) for x in dcmp.right_only]
   #diff_files += [os.path.join(parent, x) for x in dcmp.funny_files]
   if dcmp.left_only:
-    print parent + ' Left Only:\n\t' + '\n\t'.join(dcmp.left_only)
+    print(parent + ' Left Only:\n\t' + '\n\t'.join(dcmp.left_only))
     pass
   if dcmp.right_only:
-    print parent + ' Right Only:\n\t' + '\n\t'.join(dcmp.right_only)
+    print(parent + ' Right Only:\n\t' + '\n\t'.join(dcmp.right_only))
     pass
   if dcmp.funny_files:
-    print parent + ' Files cannot be compared:\n\t' + '\n\t'.join(dcmp.funny_files)
+    print(parent + ' Files cannot be compared:\n\t' + '\n\t'.join(dcmp.funny_files))
     pass
-  for subdir, sub_dcmp in dcmp.subdirs.iteritems():
+  for subdir, sub_dcmp in dcmp.subdirs.items():
     diff_files += list_diff_files(os.path.join(parent, subdir), sub_dcmp)
   return diff_files
 
@@ -99,11 +107,11 @@ def diff_two_roots(root1, root2):
 
   if filelist:
     if len(filelist) > 50:
-      print 'Too many diff files to display. Total [%d] files' % len(filelist)
+      print('Too many diff files to display. Total [%d] files' % len(filelist))
       sys.exit(-1)
     tabdiff_with_vim(root1, root2, filelist)
   else:
-    print 'No difference'
+    print('No difference')
     sys.exit(0)
 
 if '__main__' == __name__:
