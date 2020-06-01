@@ -40,6 +40,11 @@ def tabdiff_with_vim(root1, root2, filelist):
       continue
     file_path_in_root1 = os.path.join(root1, file_path)
     if os.path.exists(file_path_in_root1):
+      if os.path.isdir(file_path_in_root1):
+        print('skip directory ' + os.path.join(root1, file_path))
+        non_text_filelist.append(file_path)
+        continue
+
       with open(file_path_in_root1) as fp:
         if not istext(fp.read(1024)):
           print('skip non-text file ' + os.path.join(root1, file_path))
@@ -61,6 +66,7 @@ def tabdiff_with_vim(root1, root2, filelist):
       script_content += ":vertical diffsplit %s\n" % file_path_in_root2
     else:
       script_content += ":vertical diffsplit %s\n" % os.devnull
+    script_content += ':wincmd l\n'
     script_content += ':tabn\n'
 
   with tempfile.NamedTemporaryFile(suffix = '_' + os.path.basename(__file__), mode = 'w') as fp:
@@ -139,8 +145,8 @@ if '__main__' == __name__:
       sys.exit(-1)
 
     vim_proc = children[-1]
-    root1 = vim_proc.cmdline()[-2]
-    root2 = vim_proc.cmdline()[-1]
+    root1 = vim_proc.cmdline()[-1]
+    root2 = vim_proc.cmdline()[-2]
 
     diff_two_roots(root1, root2)
     child.kill(0)
