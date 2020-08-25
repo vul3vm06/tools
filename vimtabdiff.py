@@ -88,6 +88,8 @@ def list_diff_files(parent, dcmp):
   diff_files += [os.path.join(parent, x) for x in dcmp.left_only]
   diff_files += [os.path.join(parent, x) for x in dcmp.right_only]
   #diff_files += [os.path.join(parent, x) for x in dcmp.funny_files]
+  if dcmp.same_files:
+    print ("Warning: dcmp.same_files: " + str(dcmp.same_files))
   if dcmp.left_only:
     print(parent + ' Left Only:\n\t' + '\n\t'.join(dcmp.left_only))
     pass
@@ -131,7 +133,7 @@ if '__main__' == __name__:
     parser.add_argument('root1', help='right tab', type=str)
     parser.add_argument('root2', help='left tab', type=str)
     opt = parser.parse_args(sys.argv[1:])
-    diff_two_roots(opt.root1, opt.root2)
+    diff_two_roots(opt.root2, opt.root1)
   else:
     child = pexpect.spawn('git difftool --dir-diff --no-prompt ' + ' '.join(sys.argv[1:]))
     print('spawn git difftool pid ' + str(child.pid))
@@ -139,14 +141,22 @@ if '__main__' == __name__:
     if not child.isalive():
       print('Error. child is not alive. pid ' + child.pid)
     children = psutil.Process(child.pid).children(recursive=True)
-    if len(children) < 1 or children[-1].name() != 'vim':
+    # possible example of children:
+    # /usr/lib/git-core/git difftool--helper /tmp/git-difftool.DxqQaw/left/ /tmp/git-difftool.DxqQaw/right/
+    # /bin/sh /usr/lib/git-core/git-difftool--helper /tmp/git-difftool.DxqQaw/left/ /tmp/git-difftool.DxqQaw/right/
+    # vim -R -f -d -c wincmd l -c cd $GIT_PREFIX /tmp/git-difftool.DxqQaw/left/ /tmp/git-difftool.DxqQaw/right/
+    # /bin/bash -c diff -a /tmp/vzECZxX/0 /tmp/vzECZxX/1 >/tmp/vzECZxX/2 2>&1
+    for c in children:
+      if c.name() == 'vim':
+        root1 = c.cmdline()[-1]
+        root2 = c.cmdline()[-2]
+        break
+      else:
+        continue
+    else:
       print('Error. unexpected children:\n' +
             '\n'.join([' '.join(c.cmdline()) for c in children]))
       sys.exit(-1)
-
-    vim_proc = children[-1]
-    root1 = vim_proc.cmdline()[-1]
-    root2 = vim_proc.cmdline()[-2]
 
     diff_two_roots(root1, root2)
     child.kill(0)
