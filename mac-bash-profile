@@ -1,0 +1,145 @@
+if [ -f ~/.bashrc ]; then
+  source ~/.bashrc
+fi
+
+aroot()
+{
+  [[ $(adb shell id -u -n) != "root"* && $(adb shell id -u -n) != "uid=0(root)"* ]] && adb root || echo "Already root. skip"
+}
+
+adbsetup()
+{
+  adb wait-for-device; sleep 3; adb root; sleep 3; adb remount; adb logcat -G 256K; adb shell date `date +%m%d%H%M%Y.%S`;
+}
+
+#export NSPR_LOG_MODULES=AlarmManager:5,AlarmManagerWorker:5
+export NSPR_LOG_MODULES=SystemMessageService:5,AlarmManager:5,XX:5
+#export NSPR_LOG_MODULES=SystemMessageService:5,WebActivity:5,WebActivityWorker:5
+#export NSPR_LOG_MODULES=HelperAppService:5
+#export NSPR_LOG_MODULES=timestamp,append,sync,all:5
+#export NSPR_LOG_MODULES=Focus:5,IME:5
+adblogon()
+{
+  adb shell stop b2g
+  adb shell stop api-daemon
+  adb shell setprop kaios.log.enable 1
+  adb shell setprop kaios.log.filter $NSPR_LOG_MODULES
+  adb shell start api-daemon
+  adb shell start b2g
+}
+
+adate()
+{
+  aroot;
+  adb shell date `date +%m%d%H%M%Y.%S`;
+  adb shell hwclock -w;
+}
+
+gp()
+{
+  if [[ -f "$@" ]]; then
+    echo "Warning: At least one file matches the wildcard, use grep --color=auto -Inr --exclude=tags --exclude-dir={*.git,dist,generated,node_modules,target,obj*,forks} instead."
+  else
+    unbuffer grep --color=auto -Inr --exclude=tags --exclude-dir={*.git,dist,generated,node_modules,target,obj*,forks} "$@" | cut -c1-300
+  fi
+}
+
+findn()
+{
+  if [[ -f "$@" ]]; then
+    echo "Warning: At least one file matches the wildcard, use find . -name \"FILENAME\" instead."
+  else
+    find . -name "$@"
+  fi
+}
+
+cclogon()
+{
+  export MOZ_CC_LOG_DIRECTORY=~/temp/cc
+  export MOZ_CC_LOG_SHUTDOWN=1
+  export MOZ_DISABLE_CONTENT_SANDBOX=t
+  export MOZ_CC_ALL_TRACES=shutdown
+  export MOZ_CC_LOG_THREAD=main
+  export XPCOM_MEM_LEAK_LOG=1
+}
+
+syncworkstation()
+{
+  echo $1
+  if [[ $1 == "pull" ]];
+  then
+    SRC="claire@claire.local:~/Documents/bugs/"
+    DST="$HOME/Documents/bugs/"
+  elif [[ $1 == "push" ]];
+  then
+    SRC="$HOME/Documents/bugs/"
+    DST="claire@claire.local:~/Documents/bugs/"
+  else
+    echo "pull or push?"
+    return;
+  fi
+
+  rsync -av --delete "$SRC" "$DST" --dry-run --exclude=ui-utils/appscmd
+  read -p " do it? y/n " ans
+  case $ans in
+    y )
+      rsync -av --delete $SRC $DST  --exclude=ui-utils/appscmd;
+      ;;
+    * )
+      echo "cancel."
+      ;;
+  esac
+}
+
+alias ls="/bin/ls -Fw"
+alias ll="/bin/ls -al"
+alias vi="vim -p"
+alias ctags="`brew --prefix ctags`/bin/ctags"
+alias to="source to"
+alias rmtrs="sed -i '.original' -E 's/[ '$'\t'']+$//'"
+alias ashell="aroot; adb remount && adb shell"
+alias aremount="adb shell \"mount -o rw,remount /system\""
+alias alogcat="adb logcat -v threadtime /system/bin/fakesurfaceflinger:S /system/bin/sdcard:S ADB_SERVICES:S ADebug:S Adreno-EGL:S Compositor:S EventHub:S FBI:S HWComposerSurface:S HwcPassthrough:S LOWI-8.6.0.81:S MTK_FG:S QC-QMI:S SDM:S Sensors:S ServiceManagement:S ServiceManager:S SurfaceFlinger:S ThermalEngine:S VM_BMS:S VendorServiceManager:S VolumeManager:S WifiHAL:S auditd:S b2gkillerd:S chatty:S crash_dump32:S cutils:S hw-IPCThreadState:S init:S libEGL:S libc:S libsuspend:S linker:S propClient:S qdlights:S qdutils:S rmt_storage:S sdcard:S vendor.qti.hardware.factory@1.0-impl:S vndksupport:S wpa_supplicant:S"
+alias alogcats="adb logcat -s"
+alias alogc="adb logcat -c"
+alias acharge="aroot; adb shell \"echo 0 > /sys/class/power_supply/battery/stop_charge\""
+alias readlink="greadlink"
+#alias mountu="sudo mount -t nfs -o rw,resvport claire.local:/mnt/md0 /mnt/md0; sudo mount -t nfs -o rw,resvport claire.local:/home/claire/Documents/bugs ~/Documents/bugs"
+alias mountu="sudo mount -t nfs -o rw,resvport claire.local:/mnt/md0 /mnt/md0"
+
+export PS1="\[\e[36;40m\]\u \t \w \\$ \[\e[0m\]"
+export LC_ALL=C
+export CLICOLOR=true
+
+export PATH="$HOME/.cargo/bin:/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+
+export MINIDUMP_STACKWALK="/usr/local/bin/minidump_stackwalk"
+export NSPR_LOG_FILE=/var/log/nspr.log
+
+export NO_NETWORK=1
+export NO_BUNDLE=1
+export DISABLE_SOURCES_XML=true
+export VARIANT=userdebug
+export DEVICE_DEBUG=1
+export OFFLINE=1
+
+uuidgen-c++()
+{
+    local UUID=$(uuidgen)
+    echo "// $UUID"
+    echo "#define NS__IID \\"
+    echo "{ 0x${UUID:0:8}, 0x${UUID:9:4}, 0x${UUID:14:4}, \\"
+    echo -n "  { 0x${UUID:19:2}, 0x${UUID:21:2}, 0x${UUID:24:2}, "
+    echo -n "0x${UUID:26:2}, 0x${UUID:28:2}, 0x${UUID:30:2}, "
+    echo "0x${UUID:32:2}, 0x${UUID:34:2} } }"
+}
+
+export PATH="$HOME/.cargo/bin:$PATH"
+export NVM_DIR="$HOME/.nvm"
+[ -s "/usr/local/opt/nvm/nvm.sh" ] && . "/usr/local/opt/nvm/nvm.sh"  # This loads nvm
+[ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] && . "/usr/local/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
+
+if command -v pyenv 1>/dev/null 2>&1; then
+  eval "$(pyenv init -)"
+fi
+
