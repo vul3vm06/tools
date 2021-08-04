@@ -1,0 +1,151 @@
+#!/bin/bash
+
+BUILD_FILE_SYSTEM="$HOME/workspace/"
+
+PWD=$(pwd)"/"
+if [[ $# -eq 1 ]] && [[ $PWD != $BUILD_FILE_SYSTEM*/KaiOS* ]];
+then
+  UBUNTU_TO=/mnt/md0/to
+  if [ -f $UBUNTU_TO ];
+  then
+    source $UBUNTU_TO;
+    SRC_RET=$?;
+    if [ $SRC_RET == 0 ];
+    then
+      return
+    fi
+  fi
+fi
+
+
+QRD_PATH=$BUILD_FILE_SYSTEM"QRD/KaiOS"
+GF2_PATH=$BUILD_FILE_SYSTEM"GF2/KaiOS"
+RT_PATH=$BUILD_FILE_SYSTEM"Runtime/KaiOS"
+
+#PRJ_PATH=${PWD%%KaiOS*}
+#BASE_PATH=${PWD##*KaiOS/}
+
+PRJ_PATH=${PWD/KaiOS*/KaiOS\/}
+BASE_PATH=${PWD/*\/KaiOS\//}
+
+if [[ $PRJ_PATH == $BASE_PATH ]] ;
+then
+  PRJ_PATH=$GF2_PATH"/"
+  BASE_PATH=""
+fi
+
+OUT_PATH=$PRJ_PATH"out/"
+GONK_PATH=$PRJ_PATH"gonk-misc/"
+GECKO_PATH=$PRJ_PATH"gecko/"
+GAIA_PATH=$PRJ_PATH"gaia/"
+APPS_PATH=$GAIA_PATH"apps/"
+PRODUCT_PATH=$PRJ_PATH"out/target/product/"
+OBJDIR_PATH=$PRJ_PATH"objdir-gecko/"
+MANIFESTS_PATH=$PRJ_PATH".repo/manifests/"
+
+KOOST_PATH=$GECKO_PATH"koost/"
+DOM_PATH=$GECKO_PATH"dom/"
+
+SYSAPP_PATH=$APPS_PATH"system/"
+SETAPP_PATH=$APPS_PATH"settings/"
+
+function check_exist_and_cd {
+  PRJ_PATH=$1
+  BASE_PATH=$2
+  DST_PATH=$PRJ_PATH"/$BASE_PATH"
+  if [ -d "$DST_PATH" ]
+  then
+    cd $DST_PATH
+  else
+    cd $PRJ_PATH
+  fi
+}
+
+case "$1" in
+  u)
+    ssh claire@claire.local
+    ;;
+  xu)
+    ssh -X claire@claire.local -Y
+    ;;
+  pu)
+    ssh claire@ubuntu.local
+    ;;
+  u14)
+    ssh claire@ubuntu14.local
+    ;;
+  u16)
+    ssh claire@ubuntu16.local
+    ;;
+  qa)
+    ssh kaios-ci@kaios-test-08.local
+    ;;
+  all)
+    cd $BUILD_FILE_SYSTEM
+    ;;
+  bugs)
+    cd ~/Documents/bugs
+    ;;
+  the)
+    cd ~/Documents/bugs/the-bugs
+    ;;
+  ui)
+    cd ~/Documents/bugs/ui-utils
+    ;;
+  qrd)
+    check_exist_and_cd $QRD_PATH $BASE_PATH
+    ;;
+  gf2)
+    check_exist_and_cd $GF2_PATH $BASE_PATH
+    ;;
+  rt)
+    check_exist_and_cd $RT_PATH $BASE_PATH
+    ;;
+  top)
+    cd $PRJ_PATH
+    ;;
+  out)
+    cd $OUT_PATH
+    ;;
+  gonk)
+    cd $GONK_PATH
+    ;;
+  gecko)
+    cd $GECKO_PATH
+    ;;
+  gaia)
+    cd $GAIA_PATH
+    ;;
+  apps)
+    cd $APPS_PATH
+    ;;
+  mani)
+    cd $MANIFESTS_PATH
+    ;;
+  product)
+    if [ 1 -eq "$(find $PRODUCT_PATH -maxdepth 1 -type d ! -path $PRODUCT_PATH | wc -l)" ]
+    then
+      cd "$(find $PRODUCT_PATH -maxdepth 1 -type d ! -path $PRODUCT_PATH)"
+    else
+      cd $PRODUCT_PATH
+    fi
+    ;;
+  objdir)
+    cd $OBJDIR_PATH
+    ;;
+  koost)
+    cd $KOOST_PATH
+    ;;
+  sysapp)
+    cd $SYSAPP_PATH
+    ;;
+  *)
+    if [ -d "$1" ]
+    then
+      cd "$1"
+    else
+      echo "mac Invalid Destination $1"
+    fi
+    ;;
+esac
+

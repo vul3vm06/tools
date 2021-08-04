@@ -96,7 +96,7 @@ alias ls="/bin/ls -Fw"
 alias ll="/bin/ls -al"
 alias vi="vim -p"
 alias ctags="`brew --prefix ctags`/bin/ctags"
-alias to="source to"
+alias to="source ~/to"
 alias rmtrs="sed -i '.original' -E 's/[ '$'\t'']+$//'"
 alias ashell="aroot; adb remount && adb shell"
 alias aremount="adb shell \"mount -o rw,remount /system\""
@@ -107,8 +107,9 @@ alias acharge="aroot; adb shell \"echo 0 > /sys/class/power_supply/battery/stop_
 alias readlink="greadlink"
 #alias mountu="sudo mount -t nfs -o rw,resvport claire.local:/mnt/md0 /mnt/md0; sudo mount -t nfs -o rw,resvport claire.local:/home/claire/Documents/bugs ~/Documents/bugs"
 alias mountu="sudo mount -t nfs -o rw,resvport claire.local:/mnt/md0 /mnt/md0"
+alias macheslint="LC_ALL=\"en_US.UTF-8\" ./mach lint -l eslint --fix"
 
-export PS1="\[\e[36;40m\]\u \t \w \\$ \[\e[0m\]"
+export PS1="\[\e[0;36m\]\u \t \w \\$ \[\e[0m\]"
 export LC_ALL=C
 export CLICOLOR=true
 
