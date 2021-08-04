@@ -1,0 +1,193 @@
+#!/bin/bash
+
+UNAME=`uname`
+if [ $UNAME == "Darwin" ];
+then
+  BUILD_FILE_SYSTEM="/mnt/md0"
+elif [ $UNAME == "Linux" ];
+then
+  BUILD_FILE_SYSTEM="/mnt/md0"
+else
+  echo "Unknown OS $UNAME"
+  return
+fi
+
+B2G_PROJ_PATH=$BUILD_FILE_SYSTEM"/b2g"
+GF2_PATH=$B2G_PROJ_PATH"/go_flip2_new"
+QUOIN_PATH=$B2G_PROJ_PATH"/quoin"
+QUADRO_Q_SFP_PATH=$B2G_PROJ_PATH"/quadro_q_sfp"
+QUADRO_Q_SFP_3_0_PATH=$B2G_PROJ_PATH"/quadro_q_sfp-v3.0"
+QUADRO_Q_ST_PATH=$B2G_PROJ_PATH"/quadro_q_st"
+MODRIC_M_PATH=$B2G_PROJ_PATH"/modric_m_st"
+MODRIC_Q_PATH=$B2G_PROJ_PATH"/modric_q_st"
+RT_PATH=$B2G_PROJ_PATH"/kaiosrt_next"
+RT_3_0_PATH=$B2G_PROJ_PATH"/kaiosrt_next-v3.0"
+
+PWD=$(pwd)"/"
+
+declare -a ALL_PRJ_PATHS=(
+  $GF2_PATH
+  $QUOIN_PATH
+  $QUADRO_Q_SFP_PATH
+  $QUADRO_Q_SFP_3_0_PATH
+  $QUADRO_Q_ST_PATH
+  )
+
+PRJ_PATH=$QUADRO_Q_SFP_PATH"/KaiOS/"
+unset BASE_PATH
+# or: for p in "${ALL_PRJ_PATHS[@]}" ;
+for p in $B2G_PROJ_PATH/* ;
+do
+  # Must use [[ ]] ,  not [ ] .
+  if [[ $PWD == $p/* ]] ;
+  then
+    BASE_PATH=${PWD#$p}
+    PRJ_PATH=$p"/KaiOS/"
+    break
+  fi
+done
+
+OUT_PATH=$PRJ_PATH"out/"
+GONK_PATH=$PRJ_PATH"gonk-misc/"
+GECKO_PATH=$PRJ_PATH"gecko/"
+GAIA_PATH=$PRJ_PATH"gaia/"
+APPS_PATH=$GAIA_PATH"apps/"
+PRODUCT_PATH=$PRJ_PATH"out/target/product/"
+OBJDIR_PATH=$PRJ_PATH"objdir-gecko/"
+BIN_PATH=$PRJ_PATH"objdir-gecko/dist/bin"
+MANIFESTS_PATH=$PRJ_PATH".repo/manifests/"
+KOOST_PATH=$GECKO_PATH"koost/"
+
+SYSAPP_PATH=$APPS_PATH"system/"
+
+function check_exist_and_cd {
+  PRJ_PATH=$1
+  BASE_PATH=$2
+  DST_PATH=$PRJ_PATH"/$BASE_PATH"
+
+  if [ ! -z $BASE_PATH ] && [ -d "$DST_PATH" ]
+  then
+    cd $DST_PATH
+  else
+    cd $PRJ_PATH"/KaiOS"
+  fi
+}
+
+case "$1" in
+  u)
+    ssh claire@claire.local
+    ;;
+  bugs)
+    cd ~/Documents/bugs
+    ;;
+  the)
+    cd ~/Documents/bugs/the-bugs
+    ;;
+  ui)
+    cd ~/Documents/bugs/ui-utils
+    ;;
+  all)
+    cd $BUILD_FILE_SYSTEM
+    ;;
+  sidl)
+    cd $BUILD_FILE_SYSTEM/sidl
+    ;;
+  sidl-d)
+    cd $BUILD_FILE_SYSTEM/sidl-desktop
+    ;;
+  gf2)
+    check_exist_and_cd $GF2_PATH $BASE_PATH
+    ;;
+  quoin)
+    check_exist_and_cd $QUOIN_PATH $BASE_PATH
+    ;;
+  qq)
+    check_exist_and_cd $QUADRO_Q_SFP_PATH $BASE_PATH
+    ;;
+  qqf)
+    check_exist_and_cd $QUADRO_Q_SFP_PATH $BASE_PATH
+    ;;
+  qqt)
+    check_exist_and_cd $QUADRO_Q_ST_PATH $BASE_PATH
+    ;;
+  3.0)
+    check_exist_and_cd $QUADRO_Q_SFP_3_0_PATH $BASE_PATH
+    ;;
+  rt)
+    check_exist_and_cd $RT_PATH $BASE_PATH
+    ;;
+  rt3.0)
+    check_exist_and_cd $RT_3_0_PATH $BASE_PATH
+    ;;
+  mq)
+    check_exist_and_cd $MODRIC_Q_PATH $BASE_PATH
+    ;;
+  mm)
+    check_exist_and_cd $MODRIC_M_PATH $BASE_PATH
+    ;;
+  top)
+    cd $PRJ_PATH
+    ;;
+  gitroot)
+    cd `git rev-parse --show-toplevel`
+    ;;
+  out)
+    cd $OUT_PATH
+    ;;
+  gonk)
+    cd $GONK_PATH
+    ;;
+  gecko)
+    cd $GECKO_PATH
+    ;;
+  next)
+    cd $QUADRO_Q_SFP_PATH"/KaiOS/gecko"
+    ;;
+  gaia)
+    cd $GAIA_PATH
+    ;;
+  apps)
+    cd $APPS_PATH
+    ;;
+  mani)
+    cd $MANIFESTS_PATH
+    ;;
+  product)
+    if [ 1 -eq "$(find $PRODUCT_PATH -maxdepth 1 -type d ! -path $PRODUCT_PATH | wc -l)" ];
+    then
+      cd "$(find $PRODUCT_PATH -maxdepth 1 -type d ! -path $PRODUCT_PATH)"
+    else
+      cd $PRODUCT_PATH
+    fi
+    ;;
+  objdir)
+    cd $OBJDIR_PATH
+    ;;
+  bin)
+    cd $BIN_PATH
+    ;;
+  koost)
+    cd $KOOST_PATH
+    ;;
+  b2g)
+   cd $BUILD_FILE_SYSTEM"/b2g"
+    ;;
+  sysapp)
+    cd $SYSAPP_PATH
+    ;;
+  *)
+    if [ -d "$1" ];
+    then
+      cd "$1"
+    elif [ -d "$B2G_PROJ_PATH/$1" ];
+    then
+      check_exist_and_cd "$B2G_PROJ_PATH/$1" $BASE_PATH
+    else
+      if [ $UNAME == "Linux" ];
+      then
+        echo "ubuntu Invalid Destination $1"
+      fi
+      return 1
+    fi
+    ;;
+esac
