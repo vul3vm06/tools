@@ -131,6 +131,7 @@ export NSPR_LOG_MODULES=SystemMessageService:5,AlarmManager:5,XX:5
 #export NSPR_LOG_MODULES=SystemMessageService:5,WebActivity:5,WebActivityWorker:5
 #export NSPR_LOG_MODULES=HelperAppService:5
 #export NSPR_LOG_MODULES=Focus:5,IME:5
+export MOZ_LOG=timestamp,$NSPR_LOG_MODULES
 adblogon()
 {
   adb shell stop b2g
