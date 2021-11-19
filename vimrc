@@ -34,6 +34,28 @@ nmap <S-Right> <C-W>>
 nmap <S-l> zl
 nmap <S-h> zh
 
+function VerticalScrollAndKeepWinView(down)
+  let view = winsaveview()
+  let winheight = winheight('%')
+
+  if a:down == 1
+    let view.lnum = view.lnum + winheight
+  else
+    let view.lnum = view.lnum - winheight
+  endif
+
+  if a:down == 1
+    let view.topline = view.topline + winheight
+  else
+    let view.topline = view.topline - winheight
+  endif
+
+  call winrestview(view)
+endfunction
+
+nmap <silent> <C-f> :call VerticalScrollAndKeepWinView(1)<Enter>
+nmap <silent> <C-b> :call VerticalScrollAndKeepWinView(0)<Enter>
+
 nnoremap n nzz
 nnoremap N Nzz
 nnoremap * *zz
