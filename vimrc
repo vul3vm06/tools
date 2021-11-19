@@ -12,6 +12,7 @@ set number
 set ruler
 set nowrap
 set cursorline
+set virtualedit=all
 set hlsearch
 xnoremap p pgvy
 
