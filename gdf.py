@@ -5,6 +5,7 @@ import subprocess
 import tempfile
 
 if '__main__' == __name__:
+  subprocess.check_call(['git', 'config', 'core.worktree', os.getcwd()])
   file_list = subprocess.check_output(['git', 'diff', '--name-only'] + sys.argv[1:]).split()
   if not file_list:
     print "No diff found."
@@ -18,7 +19,7 @@ if '__main__' == __name__:
 
   if bin_name in ['gdf', 'gdfs']:
     script_content = ''
-    vim_gdf_cmd = ':Gvdiff\r\n' if bin_name == 'gdf' else ':Gsdiff\r\n'
+    vim_gdf_cmd = ':Gvdiffsplit\r\n' if bin_name == 'gdf' else ':Gdiffsplit\r\n'
     for i in xrange(len(file_list)):
       script_content += vim_gdf_cmd
       script_content += ':wincmd l\n'
