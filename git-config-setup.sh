@@ -11,10 +11,10 @@ git config --global alias.la "log --graph --decorate --pretty=oneline --abbrev-c
 git config --global diff.tool vimdiff
 git config --global difftool.prompt false
 
-git config --global user.name hxx
-git config --global user.email vul3vm06@gmail.com
-
 git config --global core.editor vim
 
 git config --global push.default simple
 git config --global log.decorate true
+
+# git config --global user.name hxx
+# git config --global user.email vul3vm06@gmail.com

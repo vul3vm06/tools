@@ -1,0 +1,34 @@
+# source: https://github.com/vul3vm06/tools/blob/master/bashrc-to-append
+
+grepcut()
+{
+  if [[ -f "$@" ]]; then
+    echo "Warning: At least one file matches the wildcard, use grep --color=auto -Inr --exclude=tags --exclude-dir={*.git,dist,generated,node_modules,target,obj*,forks} instead."
+  else
+    grep --color=always -Inr --exclude=tags --exclude-dir={*.git} "$@" | cut -c 1-300
+  fi
+}
+
+finds()
+{
+  if [[ -f "$@" ]]; then
+    echo "Warning: At least one file matches the wildcard, use find . -name \"FILENAME\" instead."
+  else
+    find -L . -name "$@"
+  fi
+}
+
+git_format_sample()
+{
+  echo "git diff -U0 --no-color | clang-format-diff.py -p1 -i"
+}
+
+ctags_with_header_declaration() {
+  ctags -R --c-types=+p
+}
+
+alias vi="vim -p"
+export PATH="$HOME/workspace/github-vul3vm06-tools/bin:$PATH"
+export PS1="\[\033[38;5;39m\]\u@\h \t \w $ \[$(tput sgr0)\]\[\033[38;5;15m\]"
+export TERM=xterm-256color
+

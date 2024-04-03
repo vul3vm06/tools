@@ -126,12 +126,6 @@ adbsetup()
   adb wait-for-device; sleep 3; adb root; sleep 3; adb remount; adb logcat -G 256K; adb shell date `date +%m%d%H%M%Y.%S`;
 }
 
-#export NSPR_LOG_MODULES=AlarmManager:5,AlarmManagerWorker:5
-export NSPR_LOG_MODULES=SystemMessageService:5,AlarmManager:5,XX:5
-#export NSPR_LOG_MODULES=SystemMessageService:5,WebActivity:5,WebActivityWorker:5
-#export NSPR_LOG_MODULES=HelperAppService:5
-#export NSPR_LOG_MODULES=Focus:5,IME:5
-export MOZ_LOG=timestamp,$NSPR_LOG_MODULES
 adblogon()
 {
   adb shell stop b2g
@@ -149,25 +143,34 @@ adate()
   adb shell hwclock -w;
 }
 
-gp()
+grepcut()
 {
   if [[ -f "$@" ]]; then
     echo "Warning: At least one file matches the wildcard, use grep --color=auto -Inr --exclude=tags --exclude-dir={*.git,dist,generated,node_modules,target,obj*,forks} instead."
   else
-    unbuffer grep --color=auto -Inr --exclude=tags --exclude-dir={*.git,dist,generated,node_modules,target,obj*,forks} "$@" | cut -c1-300
+    grep --color=always -Inr --exclude=tags --exclude-dir={*.git} "$@" | cut -c 1-300
   fi
 }
 
-findn()
+finds()
 {
   if [[ -f "$@" ]]; then
     echo "Warning: At least one file matches the wildcard, use find . -name \"FILENAME\" instead."
   else
-    find . -name "$@"
+    find -L . -name "$@"
   fi
 }
 
-cclogon()
+git_format_sample()
+{
+  echo "git diff -U0 --no-color | clang-format-diff.py -p1 -i"
+}
+
+ctags_with_header_declaration() {
+  ctags -R --c-types=+p
+}
+
+geckologon()
 {
   export MOZ_CC_LOG_DIRECTORY=~/temp/cc
   export MOZ_CC_LOG_SHUTDOWN=1
@@ -175,12 +178,15 @@ cclogon()
   export MOZ_CC_ALL_TRACES=shutdown
   export MOZ_CC_LOG_THREAD=main
   export XPCOM_MEM_LEAK_LOG=1
+
+  #export NSPR_LOG_MODULES=SystemMessageService:5,WebActivity:5,WebActivityWorker:5
+  export NSPR_LOG_MODULES=timestamp,append,sync,all:5
+  export MOZ_LOG=timestamp,$NSPR_LOG_MODULES
+
+  export MINIDUMP_STACKWALK=/mnt/md0/google-breakpad/src/processor/minidump_stackwalk
 }
 
 alias vi="vim -p"
-# use ctags --languages=c,c++,python,sh,js -R --exclude=.git --exclude=obj* .
-# ctags --langmap=C++:.c.h.cpp.idl.hxx.hpp.webidl --langmap=JavaScript:.js.jsm --langmap=js:.js.jsm --languages=c,c++,python,sh,js -R --exclude=.git --exclude=obj* .
-alias to="source /mnt/md0/to"
 alias acharge="aroot; adb shell \"echo 0 > /sys/class/power_supply/battery/stop_charge\""
 alias adv="while true; do adb devices; date; sleep 2; done"
 alias adw="adb wait-for-device"
@@ -197,23 +203,3 @@ export PS1="\[\033[38;5;39m\]\u@\h \t \w $ \[$(tput sgr0)\]\[\033[38;5;15m\]"
 export LC_ALL=C.UTF-8
 export LC_CTYPE=en_US.UTF-8
 export CLICOLOR=true
-export PATH="$HOME/depot_tools:$PATH"
-# dirty hack to lock node version
-# export PATH="$HOME/Downloads/node-v8.9.3-linux-x86/bin:$PATH"
-
-# export NO_NETWORK=1
-# export NO_BUNDLE=1
-# export DISABLE_SOURCES_XML=true
-# export OFFLINE=1
-# export VARIANT=userdebug
-# export B2G_DEBUG=1
-
-export LOCAL_NDK_BASE_URL='ftp://ftp.kaiostech.com/ndk/android-ndk'
-export ANDROID_NDK=$HOME/.mozbuild/android-ndk-r20b-canary
-
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
-export MINIDUMP_STACKWALK=/mnt/md0/google-breakpad/src/processor/minidump_stackwalk
-cclogon
