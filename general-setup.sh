@@ -33,6 +33,9 @@ git clone https://github.com/rhysd/vim-clang-format $HOME/.vim/pack/rhysd/start/
 mkdir -p $HOME/.vim/pack/tpope/start/ &&
 git clone https://tpope.io/vim/fugitive.git $HOME/.vim/pack/tpope/start/fugitive &&
 
+mkdir -p $HOME/.vim/pack/preservim/start/ &&
+git clone https://github.com/preservim/tagbar.git $HOME/.vim/pack/preservim/start/tagbar &&
+
 # pip and pexpect and psutil for vimtabdiff.py
 wget https://bootstrap.pypa.io/get-pip.py &&
 python get-pip.py &&

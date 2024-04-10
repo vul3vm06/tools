@@ -63,7 +63,13 @@ nnoremap # #zz
 nnoremap g* g*zz
 nnoremap g# g#zz
 
+"" Windows reserves control-v for 'paste' action, use control-q instead.
+"nnoremap <C-q> <C-v>
+
 colorscheme apprentice
+
+"" This varies from environments.
+"set termguicolors
 
 highlight ExtraWhitespace ctermbg=red guibg=red
 match ExtraWhitespace /\s\+$/
@@ -74,3 +80,8 @@ autocmd BufWinLeave * call clearmatches()
 
 highlight ColorColumn ctermbg=black
 set colorcolumn=80
+
+if !empty(globpath(&rtp, 'pack/preservim/start/tagbar'))
+  set laststatus=2
+  set statusline=%<%f\ %h%m%r%=%{tagbar#currenttag('%s\ ','','f')}%-.(%l,%c%V%)\ %P
+endif
