@@ -63,6 +63,9 @@ nnoremap # #zz
 nnoremap g* g*zz
 nnoremap g# g#zz
 
+nnoremap ver :windo wincmd H<Enter>
+nnoremap hor :windo wincmd K<Enter>
+
 "" Windows reserves control-v for 'paste' action, use control-q instead.
 "nnoremap <C-q> <C-v>
 
