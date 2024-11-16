@@ -63,6 +63,28 @@ nnoremap # #zz
 nnoremap g* g*zz
 nnoremap g# g#zz
 
+nnoremap gs :call IwhiteToggle()<Enter>
+  function! IwhiteToggle()
+    if &diff
+      if has("patch-8.1.0393")
+        if &diffopt =~ 'iwhiteall'
+          set diffopt-=iwhiteall
+        else
+          set diffopt+=iwhiteall
+        endif
+      else
+        if &diffopt =~ 'iwhite'
+          set diffopt-=iwhite
+        else
+          set diffopt+=iwhite
+        endif
+      endif
+    endif
+endfunction
+
+" windows reserved paste on control-v
+nnoremap <C-q> <C-v>
+
 nnoremap ver :windo wincmd H<Enter>
 nnoremap hor :windo wincmd K<Enter>
 
