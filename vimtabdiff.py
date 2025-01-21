@@ -36,28 +36,24 @@ def tabdiff_with_vim(root1, root2, filelist):
   cmd = ['vim', '-p']
   non_text_filelist = []
   for file_path in filelist:
-    if file_path.endswith('.pyc') or file_path.endswith('.swp'):
-      continue
     file_path_in_root1 = os.path.join(root1, file_path)
     if os.path.exists(file_path_in_root1):
-      if os.path.isdir(file_path_in_root1):
-        print('skip directory ' + os.path.join(root1, file_path))
-        non_text_filelist.append(file_path)
-        continue
-
-      with open(file_path_in_root1) as fp:
-        if not istext(fp.read(1024)):
-          print('skip non-text file ' + os.path.join(root1, file_path))
-          non_text_filelist.append(file_path)
-        else:
-          cmd.append(file_path_in_root1)
+      if os.path.isfile(file_path_in_root1):
+        with open(file_path_in_root1) as fp:
+          if not istext(fp.read(1024)):
+            print('skip non-text file ' + os.path.join(root1, file_path))
+            non_text_filelist.append(file_path)
+          else:
+            cmd.append(file_path_in_root1)
+      elif os.path.isdir(file_path_in_root1):
+        cmd.append(file_path_in_root1)
+      else:
+        print('skip file ' + os.path.join(root1, file_path))
     else:
       cmd.append(os.devnull)
 
   script_content = ''
   for file_path in filelist:
-    if file_path.endswith('.pyc') or file_path.endswith('.swp'):
-      continue
     if file_path in non_text_filelist:
       print('skip non-text file ' + os.path.join(root2, file_path))
       continue
@@ -83,33 +79,32 @@ def tabdiff_with_vim(root1, root2, filelist):
       print(' '.join(cmd))
       print(script_content)
 
-def list_diff_files(parent, dcmp):
-  diff_files = [os.path.join(parent, x) for x in dcmp.diff_files]
-  diff_files += [os.path.join(parent, x) for x in dcmp.left_only]
-  diff_files += [os.path.join(parent, x) for x in dcmp.right_only]
-  #diff_files += [os.path.join(parent, x) for x in dcmp.funny_files]
+def list_diff_files(root1, root2):
+  dcmp = dircmp(root1, root2)
+  diff_files = dcmp.diff_files
+
   if dcmp.same_files:
-    print ("Warning: dcmp.same_files: " + str(dcmp.same_files))
+    print("Warning: dcmp.same_files: " + str(dcmp.same_files))
   if dcmp.left_only:
-    print(parent + ' Left Only:\n\t' + '\n\t'.join(dcmp.left_only))
-    pass
+    print(' Left Only:\n\t' + '\n\t'.join(dcmp.left_only))
+    diff_files += dcmp.left_only
   if dcmp.right_only:
-    print(parent + ' Right Only:\n\t' + '\n\t'.join(dcmp.right_only))
-    pass
+    print(' Right Only:\n\t' + '\n\t'.join(dcmp.right_only))
+    diff_files += dcmp.right_only
   if dcmp.funny_files:
-    print(parent + ' Files cannot be compared:\n\t' + '\n\t'.join(dcmp.funny_files))
-    pass
+    print(' Files cannot be compared:\n\t' + '\n\t'.join(dcmp.funny_files))
   for subdir, sub_dcmp in dcmp.subdirs.items():
-    diff_files += list_diff_files(os.path.join(parent, subdir), sub_dcmp)
+    diff_files += [os.path.join(subdir, x) for x in list_diff_files(os.path.join(root1, subdir), os.path.join(root2, subdir))]
+
   return diff_files
 
 def diff_two_roots(root1, root2):
-  if os.path.isdir(root1) and os.path.isdir(root2):
-    dcmp = dircmp(os.path.realpath(root1), os.path.realpath(root2))
-    filelist = list_diff_files('', dcmp)
-  elif os.path.isfile(root1) and os.path.isfile(root2):
+  if os.path.isfile(root1) and os.path.isfile(root2):
     subprocess.check_call(['vimdiff', root1, root2])
     sys.exit(0)
+
+  if os.path.isdir(root1) and os.path.isdir(root2):
+    filelist = list_diff_files(root1, root2)
   else:
     raise ValueError('Please assign two directories or two files!')
 
